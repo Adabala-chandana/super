@@ -1,0 +1,60 @@
+package Java5;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+public class Orderprocess {
+	public BatchSummary orderprocessing(List<Order> orders, int poolSize) {
+		if (orders == null || orders.isEmpty()) {
+			return (new BatchSummary(0, 0, Collections.emptyList()));
+		}
+		//Q1.How we will decide which threadpool we should use single &fixed &Threadpool executor?
+		ExecutorService fixedthreadPool = Executors.newFixedThreadPool(poolSize);
+		List<Callable<String>> task = new ArrayList<>(orders.size());
+		for (Order o : orders) {
+			task.add(() -> {
+				Thread.sleep(200);
+				if (o.getId() == 3 || o.getId() == 7) {
+					throw new Exception("Order" + o.getId() + "failed on purpose");
+				}
+				return ("Order" + o.getId() + "order success");
+			});
+		}
+		List<Future<String>> result = Collections.emptyList();
+		try {
+			//Q2.how to decide when to use submit & invoke all and timeout ?
+			result = fixedthreadPool.invokeAll(task);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return new BatchSummary(0, 0, Collections.emptyList());
+		} finally {
+			fixedthreadPool.shutdown();
+		}
+		int processed = 0;
+		int failed = 0;
+		List<Integer> failedOrderIds = new ArrayList<>();
+		for (int i = 0; i < result.size(); i++) {
+			try {
+				if (result.get(i).get() != null) {
+					processed++;
+				}
+			} catch (ExecutionException e) {
+				failed++;
+				failedOrderIds.add(orders.get(i).getId());
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		return new BatchSummary(processed, failed, failedOrderIds);
+
+	}
+}
