@@ -15,7 +15,7 @@ public class PlayListDemo {
 		try {
 		p.getTracks().add("d");  
 		} catch(UnsupportedOperationException e) {
-		System.out.println("Exception list is unmodifieable");
+		System.out.println("Exception list is unmodifieable"); 
 		}
 
 	}

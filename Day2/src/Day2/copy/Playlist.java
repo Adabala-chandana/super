@@ -15,7 +15,7 @@ public class Playlist {
 //		this.tracks = tracks;
 //	}
 	public void setTracks(List<String> tracks) {
-	this.tracks = new ArrayList<>(tracks);
+	this.tracks = new ArrayList<>(tracks); 
 }
 
 }
