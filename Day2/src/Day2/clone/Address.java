@@ -1,6 +1,6 @@
 package Day2.clone;
 
-public class Address {
+public class Address implements Cloneable {
 	private String city;
 	private String zip;
 	private String country;
@@ -35,6 +35,10 @@ public class Address {
 
 	public String getZip() {
 		return zip;
+	}
+	@Override
+	protected Address clone() throws CloneNotSupportedException {
+		return (Address) super.clone(); 
 	}
 
 }
