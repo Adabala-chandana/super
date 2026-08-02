@@ -8,29 +8,27 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Validator {
-	private static final Map<Class<?>, List<Field>> fields = new ConcurrentHashMap<>();
+	private final Map<Class<?>, List<Field>> fieldCache = new ConcurrentHashMap<>();
 
-	public static  List<String> validate(Object obj) {
-		if(obj==null) {
+	public List<String> validate(Object obj) {
+		if (obj == null) {
 			List<String> list = List.of("Object is null");
 			return list;
 		}
-		List<Field> fs = fields.computeIfAbsent(obj.getClass(), Validator::getDeclaredFieldsAnnotation);
-		List<String> l = new ArrayList<>(fs.size());
+		List<Field> fs = fieldCache.computeIfAbsent(obj.getClass(), Validator::getDeclaredFieldsAnnotation);
+		List<String> validationErrors = new ArrayList<>(fs.size());
 		for (Field f : fs) {
 			Object obj1;
 			try {
 				obj1 = f.get(obj);
 				if (obj1 == null) {
-					l.add(f.getName() + " should not be null");
+					validationErrors.add(f.getName() + " should not be null");
 				}
 			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-
+				throw new IllegalStateException("Cannot access fields" + f.getName(), e);
 			}
 		}
-		return l;
+		return validationErrors;
 	}
 
 	private static List<Field> getDeclaredFieldsAnnotation(Class<?> class1) {
@@ -45,4 +43,3 @@ public class Validator {
 		return fields;
 	}
 }
-
