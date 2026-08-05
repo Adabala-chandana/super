@@ -2,6 +2,15 @@ package com.ibm.chandana.Generics;
 
 public class Product implements Identifiable {
 	private Long id;
+	private double price;
+
+	public double getPrice() {
+		return price;
+	}
+
+	public void setPrice(double price) {
+		this.price = price;
+	}
 
 	public Long getId() {
 		return id;
@@ -26,9 +35,16 @@ public class Product implements Identifiable {
 		this.Name = name;
 	}
 
+	public Product(Long id, double price, String name) {
+		super();
+		this.id = id;
+		this.price = price;
+		Name = name;
+	}
+
 	@Override
 	public String toString() {
-		return "Product [id=" + id + ", Name=" + Name + "]";
+		return "Product [id=" + id + ", price=" + price + ", Name=" + Name + "]";
 	}
 
 }
