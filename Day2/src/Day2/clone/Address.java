@@ -41,4 +41,9 @@ public class Address implements Cloneable {
 		return (Address) super.clone(); 
 	}
 
+	@Override
+	public String toString() {
+		return "Address [city=" + city + ", zip=" + zip + ", country=" + country + "]";
+	}
+
 }

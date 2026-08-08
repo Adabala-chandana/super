@@ -30,6 +30,10 @@ public class Person implements Cloneable {
 		copy.address = address.clone(); // Deep clone
 		return copy;
 	}
+	@Override
+	public String toString() {
+		return "Person [name=" + name + ", address=" + address + "]";
+	}
 }
 
 //
