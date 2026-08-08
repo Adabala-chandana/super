@@ -3,12 +3,14 @@ package Java5;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Orderprocess {
 	public BatchSummary orderprocessing(List<Order> orders, int poolSize) {
@@ -51,6 +53,20 @@ public class Orderprocess {
 			fixedthreadPool.shutdown();
 		}
 		return new BatchSummary(processed, failed, failedOrderIds);
-
+	}
+	public Map<String, Double> totalByRegion(List<Order> orders) {
+		if (orders == null || orders.isEmpty()) return Collections.emptyMap();
+		return orders.stream()
+				.collect(Collectors.groupingBy(Order::getRegion, Collectors.summingDouble(Order::getAmount)));
+	}
+	public Map<String, Long> countByRegion(List<Order> orders) {
+		if (orders == null || orders.isEmpty()) return Collections.emptyMap();
+		return orders.stream()
+				.collect(Collectors.groupingBy(Order::getRegion, Collectors.counting()));
+	}
+	public Map<Boolean, List<Order>> partitionHighValue(List<Order> orders, double threshold) {
+		if (orders == null || orders.isEmpty()) return Collections.emptyMap();
+		return orders.stream()
+				.collect(Collectors.partitioningBy(order -> order.getAmount() >= threshold));
 	}
 }
