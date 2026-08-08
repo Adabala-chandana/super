@@ -20,31 +20,25 @@ public class Product implements Identifiable {
 		this.id = id;
 	}
 
-	private String Name;
+	private String name;
 
 	public String getName() {
-		return Name;
+		return name;
 	}
 
 	public void setName(String name) {
-		Name = name;
+		this.name = name;
 	}
 
-	public Product(long l, String name) {
-		this.id = l;
-		this.Name = name;
-	}
-
-	public Product(Long id, double price, String name) {
-		super();
+	public Product(Long id, String name, double price) {
 		this.id = id;
+		this.name = name;
 		this.price = price;
-		Name = name;
 	}
 
 	@Override
 	public String toString() {
-		return "Product [id=" + id + ", price=" + price + ", Name=" + Name + "]";
+		return "Product [id=" + id + ", name=" + name + ", price=" + price + "]";
 	}
 
 }

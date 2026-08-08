@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -33,6 +32,7 @@ public class Repository<T extends Identifiable> {
 	}
 
 	public Optional<T> findById(Long id) {
+		if (id == null) return Optional.empty();
 		lock.readLock().lock();
 		try {
 			return Optional.ofNullable(data.get(id));
@@ -49,25 +49,4 @@ public class Repository<T extends Identifiable> {
 			lock.readLock().unlock();
 		}
 	}
-
-	public ProductStats summarizeProducts(Repository<Product> catalog, String namePrefix) {
-		List<Product> filterproducts = catalog.findAll().stream().filter(c -> c.getName().startsWith(namePrefix))
-				.toList();
-		ProductStats p = new ProductStats();
-		if (filterproducts.isEmpty()) {
-			p.setCount(0);
-			p.setTotalPrice(Optional.of(0.0));
-			p.setMaxPrice(OptionalDouble.empty());
-			return p;
-		}
-		long count = filterproducts.size();
-		Optional<Double> sum = filterproducts.stream().map(c -> c.getPrice()).reduce(Double::sum);
-		OptionalDouble maxPrice = filterproducts.stream().mapToDouble(c -> c.getPrice()).reduce(Double::max);
-		p.setCount(count);
-		p.setTotalPrice(sum);
-		p.setMaxPrice(maxPrice);
-		return p;
-
-	}
-
 }
