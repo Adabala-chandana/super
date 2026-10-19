@@ -1,0 +1,66 @@
+
+
+CREATE PROCEDURE LOAD_EVENTLOG (
+    IN  P_BATCH_SIZE      INTEGER,      
+    IN  P_TRUNCATE_TARGET SMALLINT,   
+    OUT P_ROWS_MOVED      BIGINT,
+    OUT P_ELAPSED_SEC     DECIMAL(12,3)
+)
+LANGUAGE SQL
+MODIFIES SQL DATA
+BEGIN
+    DECLARE v_rows      INTEGER   DEFAULT 1;
+    DECLARE v_expected  BIGINT    DEFAULT 0;
+    DECLARE v_left      BIGINT    DEFAULT 0;
+    DECLARE v_moved     BIGINT    DEFAULT 0;
+    DECLARE v_start     TIMESTAMP DEFAULT CURRENT TIMESTAMP;
+    DECLARE v_end       TIMESTAMP;
+    DECLARE v_sql       VARCHAR(1000);
+    DECLARE v_stmt      STATEMENT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    IF P_BATCH_SIZE IS NULL OR P_BATCH_SIZE < 10000 OR P_BATCH_SIZE > 100000 THEN
+        SIGNAL SQLSTATE '75001' SET MESSAGE_TEXT = 'P_BATCH_SIZE must be between 10000 and 100000';
+    END IF;
+
+    SELECT COUNT(*) INTO v_expected FROM EVENTLOG_STAGING;
+
+    IF P_TRUNCATE_TARGET = 1 THEN
+        COMMIT;  
+        EXECUTE IMMEDIATE
+            'TRUNCATE TABLE EVENTLOG REUSE STORAGE IGNORE DELETE TRIGGERS RESTART IDENTITY IMMEDIATE';
+    END IF;
+    SET v_sql =
+        'INSERT INTO EVENTLOG (CREATEDAT, STATUS, SOURCESYSTEM, PAYLOAD) '
+     || 'WITH MOVED AS ( '
+     ||   'SELECT CREATEDAT, STATUS, SOURCESYSTEM, PAYLOAD '
+     ||   'FROM OLD TABLE ( '
+     ||     'DELETE FROM ( SELECT * FROM EVENTLOG_STAGING '
+     ||                   'FETCH FIRST ' || TRIM(CHAR(P_BATCH_SIZE)) || ' ROWS ONLY ) ) ) '
+     || 'SELECT CREATEDAT, STATUS, SOURCESYSTEM, PAYLOAD FROM MOVED';
+    PREPARE v_stmt FROM v_sql;
+
+    WHILE v_rows > 0 DO
+        EXECUTE v_stmt;
+        GET DIAGNOSTICS v_rows = ROW_COUNT;
+        SET v_moved = v_moved + v_rows;
+        COMMIT;              
+    END WHILE;
+    SELECT COUNT(*) INTO v_left FROM EVENTLOG_STAGING;
+    IF v_left <> 0 OR v_moved <> v_expected THEN
+        SIGNAL SQLSTATE '75002'
+            SET MESSAGE_TEXT = 'issue';
+    END IF;
+
+    SET v_end           = CURRENT TIMESTAMP;
+    SET P_ROWS_MOVED    = v_moved;
+    SET P_ELAPSED_SEC   =
+          (DAYS(v_end) - DAYS(v_start)) * 86400
+        + (SECONDS(v_end) - SECONDS(v_start))
+        + (MICROSECOND(v_end) - MICROSECOND(v_start)) / 1000000.0;
+END;
