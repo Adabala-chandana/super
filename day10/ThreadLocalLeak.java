@@ -16,6 +16,13 @@ class RequestContext {
 
     static void end() {
         SESSION_DATA.remove(); 
+    } 
+    static void end(String sessionId) {
+        Map<String, byte[]> map = SESSION_DATA.get();
+        map.remove(sessionId);             
+        if (map.isEmpty()) {
+            SESSION_DATA.remove();
+        }
     }
 }
 
